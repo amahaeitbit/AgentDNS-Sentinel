@@ -1,0 +1,229 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1120" viewBox="0 0 1800 1120" role="img" aria-labelledby="title desc">
+  <title id="title">AgentDNS Sentinel real-world reference architecture</title>
+  <desc id="desc">A production-oriented architecture showing operators, Runloop control plane, an isolated Devbox, five AI agents, the AgentDNS policy pipeline, internal services, external destinations, audit telemetry, and recommended production integrations.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#07111f"/>
+      <stop offset="1" stop-color="#101d35"/>
+    </linearGradient>
+    <linearGradient id="hero" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#38bdf8"/>
+      <stop offset="1" stop-color="#818cf8"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="9" stdDeviation="11" flood-color="#020617" flood-opacity="0.45"/>
+    </filter>
+    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
+    </marker>
+    <marker id="arrow-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#fbbf24"/>
+    </marker>
+    <style>
+      text { font-family: Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .eyebrow { fill: #7dd3fc; font-size: 17px; font-weight: 700; letter-spacing: 3px; }
+      .title { fill: #f8fafc; font-size: 48px; font-weight: 750; }
+      .subtitle { fill: #a9b9cf; font-size: 21px; }
+      .zone-title { fill: #e2e8f0; font-size: 21px; font-weight: 700; }
+      .zone-note { fill: #8fa3bd; font-size: 15px; }
+      .node-title { fill: #f8fafc; font-size: 18px; font-weight: 700; }
+      .node-body { fill: #b8c6da; font-size: 15px; }
+      .node-small { fill: #91a4bd; font-size: 13px; }
+      .chip { fill: #dbeafe; font-size: 12px; font-weight: 700; letter-spacing: 1px; }
+      .edge-label { fill: #b8c6da; font-size: 13px; font-weight: 650; }
+      .step { fill: #07111f; font-size: 14px; font-weight: 800; }
+    </style>
+  </defs>
+
+  <rect width="1800" height="1120" fill="url(#bg)"/>
+  <circle cx="1640" cy="80" r="250" fill="#38bdf8" opacity="0.045"/>
+  <circle cx="90" cy="1050" r="310" fill="#818cf8" opacity="0.045"/>
+
+  <text x="70" y="72" class="eyebrow">REAL-WORLD REFERENCE ARCHITECTURE</text>
+  <text x="70" y="128" class="title">AgentDNS Sentinel</text>
+  <text x="70" y="167" class="subtitle">Identity-aware DNS policy and auditable traffic control for AI agents running in an isolated Runloop Devbox</text>
+
+  <!-- People and Runloop control plane -->
+  <g filter="url(#shadow)">
+    <rect x="70" y="210" width="270" height="122" rx="18" fill="#13243c" stroke="#34516f"/>
+    <circle cx="112" cy="252" r="19" fill="#38bdf8" opacity="0.22"/>
+    <path d="M103 256c3-11 15-11 18 0M112 247a6 6 0 1 0 0-12 6 6 0 0 0 0 12" fill="none" stroke="#7dd3fc" stroke-width="2.5" stroke-linecap="round"/>
+    <text x="146" y="250" class="node-title">Platform / security team</text>
+    <text x="102" y="286" class="node-body">Launch demo • review policy</text>
+    <text x="102" y="309" class="node-body">investigate events • respond</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="390" y="210" width="510" height="122" rx="18" fill="#13243c" stroke="#34516f"/>
+    <rect x="416" y="229" width="126" height="25" rx="12" fill="#1d4ed8" opacity="0.42"/>
+    <text x="432" y="246" class="chip">RUNLOOP</text>
+    <text x="416" y="280" class="node-title">Control plane</text>
+    <text x="416" y="307" class="node-body">Blueprint • Devbox lifecycle • SSH • authenticated tunnel • network policy</text>
+  </g>
+
+  <g filter="url(#shadow)">
+    <rect x="950" y="210" width="370" height="122" rx="18" fill="#13243c" stroke="#34516f"/>
+    <text x="977" y="249" class="node-title">Reflex operations dashboard</text>
+    <text x="977" y="278" class="node-body">Live topology • scenario runner</text>
+    <text x="977" y="302" class="node-body">DNS decisions • control audit</text>
+  </g>
+
+  <g>
+    <rect x="1370" y="210" width="360" height="122" rx="18" fill="#0f2037" stroke="#fbbf24" stroke-dasharray="8 7"/>
+    <rect x="1396" y="229" width="170" height="25" rx="12" fill="#92400e" opacity="0.38"/>
+    <text x="1412" y="246" class="chip" fill="#fde68a">PRODUCTION ADD-ON</text>
+    <text x="1396" y="280" class="node-title">Identity + secrets</text>
+    <text x="1396" y="306" class="node-body">SSO/RBAC • workload certs • vault</text>
+  </g>
+
+  <path d="M340 271 H390" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow-cyan)"/>
+  <path d="M900 271 H950" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow-cyan)"/>
+  <path d="M1320 271 H1370" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#arrow-amber)"/>
+  <text x="350" y="254" class="edge-label">API</text>
+  <text x="909" y="254" class="edge-label">HTTPS</text>
+
+  <!-- Runloop Devbox zone -->
+  <rect x="70" y="382" width="1335" height="632" rx="26" fill="#0b1728" stroke="#3b82f6" stroke-width="2"/>
+  <rect x="70" y="382" width="1335" height="54" rx="26" fill="#0e2a48"/>
+  <path d="M70 410 Q70 382 98 382 H1377 Q1405 382 1405 410 V436 H70Z" fill="#0e2a48"/>
+  <text x="98" y="416" class="zone-title">Runloop Devbox — isolated workload plane</text>
+  <text x="1020" y="416" class="zone-note">Network Policy: deny-by-default outer egress boundary</text>
+
+  <!-- Agent runtime -->
+  <rect x="100" y="470" width="300" height="440" rx="20" fill="#101f34" stroke="#2d4663"/>
+  <text x="126" y="508" class="zone-title">AI agent runtimes</text>
+  <text x="126" y="533" class="zone-note">Stable workload identity per sandbox</text>
+
+  <g>
+    <rect x="126" y="558" width="248" height="52" rx="12" fill="#162a44"/>
+    <circle cx="150" cy="584" r="10" fill="#38bdf8"/><text x="171" y="589" class="node-title">Researcher</text>
+    <rect x="126" y="622" width="248" height="52" rx="12" fill="#162a44"/>
+    <circle cx="150" cy="648" r="10" fill="#38bdf8"/><text x="171" y="653" class="node-title">Deployer</text>
+    <rect x="126" y="686" width="248" height="52" rx="12" fill="#162a44"/>
+    <circle cx="150" cy="712" r="10" fill="#fb7185"/><text x="171" y="717" class="node-title">Untrusted agent</text>
+    <rect x="126" y="750" width="248" height="52" rx="12" fill="#162a44"/>
+    <circle cx="150" cy="776" r="10" fill="#a78bfa"/><text x="171" y="781" class="node-title">Load tester</text>
+    <rect x="126" y="814" width="248" height="70" rx="12" fill="#162a44"/>
+    <circle cx="150" cy="840" r="10" fill="#34d399"/><text x="171" y="845" class="node-title">Incident responder</text>
+    <text x="171" y="866" class="node-small">observes + remediates</text>
+  </g>
+
+  <!-- Policy engine -->
+  <rect x="450" y="470" width="520" height="440" rx="20" fill="#101f34" stroke="#2d4663"/>
+  <text x="476" y="508" class="zone-title">AgentDNS traffic decision point</text>
+  <text x="476" y="533" class="zone-note">Deny rules and the query guard run before the allowlist</text>
+
+  <g>
+    <rect x="482" y="558" width="456" height="47" rx="12" fill="#13304a" stroke="#38bdf8"/>
+    <circle cx="513" cy="582" r="15" fill="#38bdf8"/><text x="508" y="587" class="step">1</text>
+    <text x="545" y="578" class="node-title">Authenticate workload identity</text>
+    <text x="545" y="596" class="node-small">source IP today → mTLS/SPIFFE in production</text>
+
+    <rect x="482" y="613" width="456" height="47" rx="12" fill="#13304a" stroke="#38bdf8"/>
+    <circle cx="513" cy="637" r="15" fill="#38bdf8"/><text x="508" y="642" class="step">2</text>
+    <text x="545" y="633" class="node-title">Apply deny rules</text>
+    <text x="545" y="651" class="node-small">metadata + admin plane, ahead of any allowlist</text>
+
+    <rect x="482" y="668" width="456" height="47" rx="12" fill="#13304a" stroke="#38bdf8"/>
+    <circle cx="513" cy="692" r="15" fill="#38bdf8"/><text x="508" y="697" class="step">3</text>
+    <text x="545" y="688" class="node-title">Screen the query shape</text>
+    <text x="545" y="706" class="node-small">label length · depth · size — stops DNS tunnelling</text>
+
+    <rect x="482" y="723" width="456" height="47" rx="12" fill="#13304a" stroke="#38bdf8"/>
+    <circle cx="513" cy="747" r="15" fill="#38bdf8"/><text x="508" y="752" class="step">4</text>
+    <text x="545" y="743" class="node-title">Evaluate allowlist + grants</text>
+    <text x="545" y="761" class="node-small">exact names + label-anchored wildcards</text>
+
+    <rect x="482" y="778" width="456" height="47" rx="12" fill="#13304a" stroke="#38bdf8"/>
+    <circle cx="513" cy="802" r="15" fill="#38bdf8"/><text x="508" y="807" class="step">5</text>
+    <text x="545" y="798" class="node-title">Enforce quota + cost budget</text>
+    <text x="545" y="816" class="node-small">queries/second · rolling spend · alert at 80%</text>
+
+    <rect x="482" y="833" width="456" height="47" rx="12" fill="#13304a" stroke="#38bdf8"/>
+    <circle cx="513" cy="857" r="15" fill="#38bdf8"/><text x="508" y="862" class="step">6</text>
+    <text x="545" y="853" class="node-title">Route to healthy endpoints</text>
+    <text x="545" y="871" class="node-small">probe + debounce + round-robin + failover</text>
+  </g>
+
+  <!-- Services -->
+  <rect x="1020" y="470" width="355" height="440" rx="20" fill="#101f34" stroke="#2d4663"/>
+  <text x="1046" y="508" class="zone-title">Approved destinations</text>
+  <text x="1046" y="533" class="zone-note">Split-horizon names, healthy endpoints only</text>
+
+  <g>
+    <rect x="1048" y="566" width="299" height="74" rx="14" fill="#133126" stroke="#34d399"/>
+    <text x="1073" y="595" class="node-title">Internal knowledge service</text>
+    <text x="1073" y="620" class="node-small">docs.internal • healthy</text>
+
+    <rect x="1048" y="658" width="143" height="86" rx="14" fill="#133126" stroke="#34d399"/>
+    <text x="1073" y="689" class="node-title">API A</text>
+    <text x="1073" y="714" class="node-small">primary</text>
+    <text x="1073" y="735" class="node-small">healthy</text>
+
+    <rect x="1204" y="658" width="143" height="86" rx="14" fill="#133126" stroke="#34d399"/>
+    <text x="1229" y="689" class="node-title">API B</text>
+    <text x="1229" y="714" class="node-small">replica</text>
+    <text x="1229" y="735" class="node-small">healthy</text>
+
+    <rect x="1048" y="774" width="299" height="90" rx="14" fill="#16283e" stroke="#fbbf24" stroke-dasharray="7 6"/>
+    <text x="1073" y="805" class="node-title">Authenticated egress proxy</text>
+    <text x="1073" y="830" class="node-small">L7 enforcement for SaaS / model APIs</text>
+    <text x="1073" y="851" class="node-small">recommended production control</text>
+  </g>
+
+  <!-- Runtime arrows -->
+  <path d="M400 690 H450" stroke="#38bdf8" stroke-width="4" marker-end="url(#arrow-cyan)"/>
+  <text x="405" y="674" class="edge-label">DNS</text>
+  <path d="M970 690 H1020" stroke="#34d399" stroke-width="4" marker-end="url(#arrow-green)"/>
+  <text x="977" y="674" class="edge-label">ALLOW</text>
+  <path d="M1020 748 C985 748 985 840 938 840" fill="none" stroke="#34d399" stroke-width="2.5" stroke-dasharray="6 5" marker-end="url(#arrow-green)"/>
+  <text x="949" y="797" class="edge-label">health probes</text>
+
+  <!-- Evidence strip -->
+  <g filter="url(#shadow)">
+    <rect x="240" y="942" width="992" height="104" rx="18" fill="#13243c" stroke="#34516f"/>
+    <text x="270" y="978" class="node-title">Evidence + operations plane</text>
+    <text x="270" y="1007" class="node-body">DNS decision log</text>
+    <text x="450" y="1007" class="node-body">Control-plane audit</text>
+    <text x="659" y="1007" class="node-body">Health state</text>
+    <text x="796" y="1007" class="node-body">Budget + health alerts</text>
+    <text x="969" y="1007" class="node-body">Incident evidence</text>
+  </g>
+  <path d="M710 910 V942" stroke="#38bdf8" stroke-width="3" marker-end="url(#arrow-cyan)"/>
+
+  <!-- Enterprise integration zone -->
+  <rect x="1450" y="382" width="280" height="632" rx="26" fill="#0d1b2e" stroke="#fbbf24" stroke-width="2" stroke-dasharray="9 7"/>
+  <text x="1478" y="420" class="zone-title">Enterprise systems</text>
+  <text x="1478" y="447" class="zone-note">Production integration targets</text>
+
+  <rect x="1478" y="486" width="224" height="86" rx="14" fill="#17263b"/>
+  <text x="1502" y="520" class="node-title">Private services</text>
+  <text x="1502" y="546" class="node-small">APIs • databases • registries</text>
+
+  <rect x="1478" y="594" width="224" height="86" rx="14" fill="#17263b"/>
+  <text x="1502" y="628" class="node-title">Approved SaaS</text>
+  <text x="1502" y="654" class="node-small">model APIs • Git • tickets</text>
+
+  <rect x="1478" y="702" width="224" height="86" rx="14" fill="#17263b"/>
+  <text x="1502" y="736" class="node-title">SIEM / observability</text>
+  <text x="1502" y="762" class="node-small">OTel • alerts • retention</text>
+
+  <rect x="1478" y="810" width="224" height="86" rx="14" fill="#17263b"/>
+  <text x="1502" y="844" class="node-title">Policy source</text>
+  <text x="1502" y="870" class="node-small">GitOps • approvals • OPA</text>
+
+  <path d="M1405 618 H1450" stroke="#34d399" stroke-width="3" marker-end="url(#arrow-green)"/>
+  <path d="M1405 836 H1450" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#arrow-amber)"/>
+  <path d="M1232 994 C1370 994 1360 745 1478 745" fill="none" stroke="#fbbf24" stroke-width="2.5" stroke-dasharray="7 6" marker-end="url(#arrow-amber)"/>
+
+  <!-- Legend/footer -->
+  <line x1="70" y1="1082" x2="1730" y2="1082" stroke="#243b55"/>
+  <line x1="92" y1="1058" x2="137" y2="1058" stroke="#38bdf8" stroke-width="4" marker-end="url(#arrow-cyan)"/>
+  <text x="151" y="1064" class="node-small">Implemented demo path</text>
+  <line x1="360" y1="1058" x2="405" y2="1058" stroke="#fbbf24" stroke-width="3" stroke-dasharray="7 6" marker-end="url(#arrow-amber)"/>
+  <text x="419" y="1064" class="node-small">Production hardening / integration</text>
+  <text x="1120" y="1064" class="node-small">DNS policy is the decision layer; Runloop Network Policy and an egress proxy provide enforcement.</text>
+</svg>

@@ -1,0 +1,10 @@
+.git
+.env
+.venv
+.web
+__pycache__
+*.pyc
+*.db
+
+.runloop
+artifacts

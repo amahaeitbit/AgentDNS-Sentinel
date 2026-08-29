@@ -1,0 +1,106 @@
+{
+  "agents": {
+    "researcher": {
+      "ip": "172.28.0.11",
+      "allowed_domains": [
+        "docs.internal",
+        "pypi.org",
+        "*.pypi.org",
+        "files.pythonhosted.org"
+      ],
+      "requests_per_second": 5,
+      "budget": {
+        "window_seconds": 60,
+        "max_cost": 40,
+        "warn_at": 0.75
+      }
+    },
+    "deployer": {
+      "ip": "172.28.0.12",
+      "allowed_domains": [
+        "*.internal",
+        "api.anthropic.com",
+        "registry.npmjs.org"
+      ],
+      "requests_per_second": 10,
+      "budget": {
+        "window_seconds": 60,
+        "max_cost": 50,
+        "warn_at": 0.8
+      }
+    },
+    "untrusted": {
+      "ip": "172.28.0.13",
+      "allowed_domains": [],
+      "requests_per_second": 2
+    },
+    "load-tester": {
+      "ip": "172.28.0.14",
+      "allowed_domains": [
+        "docs.internal"
+      ],
+      "requests_per_second": 3
+    },
+    "incident-responder": {
+      "ip": "172.28.0.15",
+      "allowed_domains": [
+        "api.internal"
+      ],
+      "requests_per_second": 4
+    }
+  },
+  "denied_domains": [
+    "metadata.internal",
+    "*.metadata.internal",
+    "metadata.google.internal",
+    "*.metadata.google.internal",
+    "admin.internal",
+    "*.admin.internal"
+  ],
+  "query_guard": {
+    "enabled": true,
+    "max_label_length": 40,
+    "max_labels": 8,
+    "max_length": 100
+  },
+  "costs": {
+    "api.anthropic.com": 10,
+    "*.anthropic.com": 10,
+    "registry.npmjs.org": 1,
+    "pypi.org": 1,
+    "*.pypi.org": 1,
+    "files.pythonhosted.org": 1
+  },
+  "records": {
+    "docs.internal": [
+      "172.28.0.21"
+    ],
+    "api.internal": [
+      "172.28.0.22",
+      "172.28.0.23"
+    ],
+    "pypi.org": [
+      "172.28.0.21"
+    ],
+    "files.pythonhosted.org": [
+      "172.28.0.21"
+    ],
+    "registry.npmjs.org": [
+      "172.28.0.21"
+    ],
+    "api.anthropic.com": [
+      "172.28.0.22",
+      "172.28.0.23"
+    ]
+  },
+  "ttl_seconds": 2,
+  "health_check": {
+    "enabled": true,
+    "port": 8080,
+    "path": "/health",
+    "interval_seconds": 1.0,
+    "timeout_seconds": 1.0,
+    "failure_threshold": 2,
+    "success_threshold": 1
+  }
+}

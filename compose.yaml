@@ -1,0 +1,227 @@
+services:
+  dns-manager:
+    build:
+      context: .
+      dockerfile: dns_manager/Dockerfile
+    environment:
+      POLICY_CONFIG: /config/policies.json
+      DATABASE_PATH: /data/traffic.db
+      CONTROL_TOKEN: ${CONTROL_TOKEN:-demo-control-token}
+      SERVICE_CONTROL_TOKEN: ${SERVICE_CONTROL_TOKEN:-demo-service-control-token}
+    volumes:
+      - ./config:/config:ro
+      - traffic-data:/data
+    ports:
+      - "8053:8053"
+    depends_on:
+      docs:
+        condition: service_healthy
+      api-a:
+        condition: service_healthy
+      api-b:
+        condition: service_healthy
+    networks:
+      lab:
+        ipv4_address: 172.28.0.53
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8053/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  researcher:
+    build:
+      context: .
+      dockerfile: agents/Dockerfile
+    environment:
+      AGENT_ID: researcher
+      AGENT_TOKEN: ${RESEARCHER_AGENT_TOKEN:-demo-researcher-token}
+    dns: 172.28.0.53
+    depends_on:
+      dns-manager:
+        condition: service_healthy
+    networks:
+      lab:
+        ipv4_address: 172.28.0.11
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  deployer:
+    build:
+      context: .
+      dockerfile: agents/Dockerfile
+    environment:
+      AGENT_ID: deployer
+      AGENT_TOKEN: ${DEPLOYER_AGENT_TOKEN:-demo-deployer-token}
+    dns: 172.28.0.53
+    depends_on:
+      dns-manager:
+        condition: service_healthy
+    networks:
+      lab:
+        ipv4_address: 172.28.0.12
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  untrusted:
+    build:
+      context: .
+      dockerfile: agents/Dockerfile
+    environment:
+      AGENT_ID: untrusted
+      AGENT_TOKEN: ${UNTRUSTED_AGENT_TOKEN:-demo-untrusted-token}
+    dns: 172.28.0.53
+    depends_on:
+      dns-manager:
+        condition: service_healthy
+    networks:
+      lab:
+        ipv4_address: 172.28.0.13
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  load-tester:
+    build:
+      context: .
+      dockerfile: agents/Dockerfile
+    environment:
+      AGENT_ID: load-tester
+      AGENT_TOKEN: ${LOAD_TESTER_AGENT_TOKEN:-demo-load-tester-token}
+    dns: 172.28.0.53
+    depends_on:
+      dns-manager:
+        condition: service_healthy
+    networks:
+      lab:
+        ipv4_address: 172.28.0.14
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  incident-responder:
+    build:
+      context: .
+      dockerfile: agents/Dockerfile
+    command: ["uvicorn", "agents.incident_responder:app", "--host", "0.0.0.0", "--port", "9000"]
+    environment:
+      CONTROL_API: http://dns-manager:8053
+      CONTROL_TOKEN: ${CONTROL_TOKEN:-demo-control-token}
+      AGENT_TOKEN: ${INCIDENT_RESPONDER_AGENT_TOKEN:-demo-incident-responder-token}
+    dns: 172.28.0.53
+    depends_on:
+      dns-manager:
+        condition: service_healthy
+    networks:
+      lab:
+        ipv4_address: 172.28.0.15
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:9000/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  docs:
+    build:
+      context: .
+      dockerfile: mock_service/Dockerfile
+    environment:
+      SERVICE_NAME: docs
+      SERVICE_CONTROL_TOKEN: ${SERVICE_CONTROL_TOKEN:-demo-service-control-token}
+    networks:
+      lab:
+        ipv4_address: 172.28.0.21
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  api-a:
+    build:
+      context: .
+      dockerfile: mock_service/Dockerfile
+    environment:
+      SERVICE_NAME: api-a
+      SERVICE_CONTROL_TOKEN: ${SERVICE_CONTROL_TOKEN:-demo-service-control-token}
+    networks:
+      lab:
+        ipv4_address: 172.28.0.22
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  api-b:
+    build:
+      context: .
+      dockerfile: mock_service/Dockerfile
+    environment:
+      SERVICE_NAME: api-b
+      SERVICE_CONTROL_TOKEN: ${SERVICE_CONTROL_TOKEN:-demo-service-control-token}
+    networks:
+      lab:
+        ipv4_address: 172.28.0.23
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/health')"]
+      interval: 2s
+      timeout: 2s
+      retries: 20
+
+  dashboard:
+    build:
+      context: .
+      dockerfile: dashboard/Dockerfile
+    command:
+      - /app/start.sh
+    environment:
+      CONTROL_API: http://dns-manager:8053
+      CONTROL_TOKEN: ${CONTROL_TOKEN:-demo-control-token}
+      RESEARCHER_URL: http://researcher:9000
+      RESEARCHER_AGENT_TOKEN: ${RESEARCHER_AGENT_TOKEN:-demo-researcher-token}
+      DEPLOYER_URL: http://deployer:9000
+      DEPLOYER_AGENT_TOKEN: ${DEPLOYER_AGENT_TOKEN:-demo-deployer-token}
+      UNTRUSTED_URL: http://untrusted:9000
+      UNTRUSTED_AGENT_TOKEN: ${UNTRUSTED_AGENT_TOKEN:-demo-untrusted-token}
+      LOAD_TESTER_URL: http://load-tester:9000
+      LOAD_TESTER_AGENT_TOKEN: ${LOAD_TESTER_AGENT_TOKEN:-demo-load-tester-token}
+      INCIDENT_RESPONDER_URL: http://incident-responder:9000
+      INCIDENT_RESPONDER_AGENT_TOKEN: ${INCIDENT_RESPONDER_AGENT_TOKEN:-demo-incident-responder-token}
+      REFLEX_API_URL: ${REFLEX_API_URL:-http://localhost:3000}
+    depends_on:
+      dns-manager:
+        condition: service_healthy
+      researcher:
+        condition: service_healthy
+      deployer:
+        condition: service_healthy
+      untrusted:
+        condition: service_healthy
+      load-tester:
+        condition: service_healthy
+      incident-responder:
+        condition: service_healthy
+    ports:
+      - "3000:3000"
+    networks:
+      - lab
+
+networks:
+  lab:
+    ipam:
+      config:
+        - subnet: 172.28.0.0/24
+
+volumes:
+  traffic-data:

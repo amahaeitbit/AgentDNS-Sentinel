@@ -1,0 +1,14 @@
+.DS_Store
+.env
+.venv/
+.web/
+__pycache__/
+*.py[cod]
+*.db
+.pytest_cache/
+reflex.lock/
+
+
+# Runloop lab state and downloaded evidence
+.runloop/
+artifacts/
