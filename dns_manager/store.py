@@ -15,6 +15,10 @@ from .policy import Decision
 # that batches them, and readers flush the queue before they query.
 BATCH_SIZE = 128
 FLUSH_INTERVAL_SECONDS = 0.05
+# The queue is bounded on purpose. If decisions ever arrive faster than they can
+# be written, the resolver sheds the oldest log lines and keeps answering rather
+# than growing until the process is killed.
+QUEUE_LIMIT = 10_000
 _SHUTDOWN = object()
 
 
@@ -24,7 +28,9 @@ class EventStore:
         self._lock = threading.Lock()
         Path(database_path).parent.mkdir(parents=True, exist_ok=True)
         self.initialize()
-        self._queue: "queue.Queue[object]" = queue.Queue()
+        self._queue: "queue.Queue[object]" = queue.Queue(maxsize=QUEUE_LIMIT)
+        self._dropped = 0
+        self._counter_lock = threading.Lock()
         self._writer: Optional[threading.Thread] = None
         self._async_writes = async_writes
         if async_writes:
@@ -102,7 +108,39 @@ class EventStore:
             with self._lock, self.connect() as connection:
                 connection.execute(self.INSERT_EVENT, row)
             return
-        self._queue.put(row)
+
+        try:
+            self._queue.put_nowait(row)
+            return
+        except queue.Full:
+            pass
+
+        # Full: discard the oldest line to make room for the newest, and count it.
+        try:
+            self._queue.get_nowait()
+            self._queue.task_done()
+            self._note_drop()
+        except queue.Empty:
+            pass
+        try:
+            self._queue.put_nowait(row)
+        except queue.Full:
+            self._note_drop()
+
+    def _note_drop(self) -> None:
+        with self._counter_lock:
+            self._dropped += 1
+
+    def stats(self) -> dict:
+        """What the write path is holding in memory right now."""
+        with self._counter_lock:
+            dropped = self._dropped
+        return {
+            "queued": self._queue.qsize(),
+            "queue_capacity": QUEUE_LIMIT,
+            "dropped": dropped,
+            "async_writes": self._async_writes,
+        }
 
     def _drain(self) -> None:
         """Writer thread: one long-lived connection, batched commits."""

@@ -214,6 +214,14 @@ services:
         condition: service_healthy
     ports:
       - "3000:3000"
+    healthcheck:
+      # Only passes once Reflex is actually serving the compiled frontend, so a
+      # cold build is distinguishable from a broken one.
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:3000')"]
+      interval: 5s
+      timeout: 5s
+      retries: 60
+      start_period: 90s
     networks:
       - lab
 

@@ -96,6 +96,10 @@ class AlertCenter:
         with self._lock:
             return [alert.to_dict() for alert in list(self._alerts)[:limit]]
 
+    def stats(self) -> dict:
+        with self._lock:
+            return {"held": len(self._alerts), "capacity": self.capacity}
+
     def clear(self) -> None:
         with self._lock:
             self._alerts.clear()
@@ -126,6 +130,12 @@ class BudgetLedger:
         entries = self._spend.setdefault(agent, deque())
         entries.append((self.clock(), cost))
         return sum(item for _, item in entries)
+
+    def stats(self) -> dict:
+        return {
+            "ledgers": len(self._spend),
+            "entries": sum(len(entries) for entries in self._spend.values()),
+        }
 
     def reset(self) -> None:
         self._spend.clear()

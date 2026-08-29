@@ -190,6 +190,25 @@ class PolicyEngine:
             )
         )
 
+    def runtime_stats(self) -> dict:
+        """Every piece of state the resolver keeps in memory, and its size.
+
+        All of it is keyed by agent or by configured record - never by the
+        queried name - so an attacker cannot grow it by inventing domains.
+        """
+        with self._lock:
+            return {
+                "agents": len(self._compiled.agents_by_name),
+                "records": len(self._compiled.records),
+                "rate_windows": len(self._requests),
+                "rate_window_entries": sum(len(entries) for entries in self._requests.values()),
+                "round_robin_keys": len(self._round_robin),
+                "budgets": self.budgets.stats(),
+                "alerts": self.alerts.stats(),
+                "health_tracked": len(self._probe_health),
+                "health_overrides": len(self._overrides),
+            }
+
     def reset_budgets(self) -> None:
         """Clear spend and alerts without touching policy or health."""
         with self._lock:

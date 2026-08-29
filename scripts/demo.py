@@ -25,7 +25,13 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import httpx  # noqa: E402
 
 from demo.runner import DEFAULT_CONTROL_API, Lab, run_scenarios  # noqa: E402
-from demo.scenarios import STAGES, resolve_selection, scenarios_by_stage  # noqa: E402
+from demo.scenarios import (  # noqa: E402
+    CAPABILITIES,
+    STAGES,
+    resolve_selection,
+    scenarios_by_capability,
+    scenarios_by_stage,
+)
 
 GREEN, RED, YELLOW, DIM, BOLD, RESET = (
     "\033[32m", "\033[31m", "\033[33m", "\033[2m", "\033[1m", "\033[0m",
@@ -52,6 +58,14 @@ def print_stage_header(title: str, subtitle: str, color: bool) -> None:
     print(f"   {paint(subtitle, DIM, color)}")
 
 
+def print_capabilities(color: bool) -> None:
+    print(f"\n{paint('By capability', BOLD, color)}")
+    for key, title, question, scenarios in scenarios_by_capability():
+        print(f"\n  {paint(key, BOLD, color)} — {title}")
+        print(f"    {paint(question, DIM, color)}")
+        print(f"    {', '.join(scenario.id for scenario in scenarios)}")
+
+
 def print_result(result, color: bool) -> None:
     mark = {"PASS": (GREEN, "PASS"), "FAIL": (RED, "FAIL"), "ERROR": (YELLOW, "ERR ")}[
         result.verdict
@@ -75,7 +89,13 @@ async def main() -> int:
     run_parser.add_argument(
         "scenarios",
         nargs="+",
-        help="scenario ids, act names (%s), or 'all'" % ", ".join(k for k, _, _ in STAGES),
+        help=(
+            "scenario ids, act names (%s), capabilities (%s), or 'all'"
+            % (
+                ", ".join(key for key, _, _ in STAGES),
+                ", ".join(key for key, _, _ in CAPABILITIES),
+            )
+        ),
     )
     run_parser.add_argument("--control-api", default=DEFAULT_CONTROL_API)
     run_parser.add_argument("--json", action="store_true", help="emit machine-readable results")
@@ -88,6 +108,7 @@ async def main() -> int:
 
     if args.command == "list":
         print_catalogue(color)
+        print_capabilities(color)
         return 0
 
     try:

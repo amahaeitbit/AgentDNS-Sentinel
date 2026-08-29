@@ -72,6 +72,13 @@ class FakeLab:
         results = await self.results(agent, domain, count, interval_ms)
         return [result["answer"] for result in results if result["ok"]]
 
+    async def runtime(self):
+        return {
+            "policy": self.engine.runtime_stats(),
+            "store": {"queued": 0, "queue_capacity": 10000, "dropped": 0},
+            "process": {"rss_kb": None},
+        }
+
     async def alerts(self, limit=50):
         return self.engine.alerts.recent(limit)
 

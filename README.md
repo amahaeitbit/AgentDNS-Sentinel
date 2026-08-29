@@ -8,7 +8,7 @@ control plane: identity-aware DNS policy, per-agent rate limits, round-robin
 load balancing, health-based failover, runtime policy changes, and a decision
 log you can audit — all running inside one Runloop Devbox.
 
-Fourteen named scenarios exercise it, including the egress attacks agents
+Fifteen named scenarios exercise it, including the egress attacks agents
 actually face: cloud-metadata SSRF through an over-broad allowlist, DNS
 tunnelling under a permitted domain, lookalike registries, and per-agent
 supply-chain scope. Each scenario reports **PASS** or **FAIL** with the checks
@@ -20,7 +20,7 @@ mapping of AgentDNS, Runloop, and Reflex, see
 **[Real-world challenges and tool mapping](docs/real-world-use-cases.md)**.
 
 ```bash
-make demo-ready  # validate, build, start, and verify all fourteen scenarios
+make demo-ready  # validate, build, start, and verify all fifteen scenarios
 ```
 
 ![AgentDNS Sentinel at a glance](docs/agentdns-sentinel-demo.png)
@@ -45,13 +45,45 @@ Regenerate it (light and dark) with `make demo-image`.
 | **3. Contain** | | *Stop one agent hurting the others* | |
 | 08 | `rate-limit` | One agent generating excessive traffic | `THROTTLE` appears once the 3 QPS quota is spent |
 | 09 | `cost-budget` | An agent quietly burning a metered API budget | A warning at 80%, refusal at 100%, free destinations unaffected |
-| 10 | `load-balance` | Uneven traffic distribution | Answers for `api.internal` alternate between replicas |
+| 10 | `memory-bounds` | Unbounded input becoming unbounded state | 40 invented names refused, and no new per-query state |
+| 11 | `load-balance` | Uneven traffic distribution | Answers for `api.internal` alternate between replicas |
 | **4. Survive** | | *Keep serving when a dependency fails* | |
-| 11 | `failover` | Service endpoint failure | API-A is really taken down; answers switch to API-B only |
-| 12 | `incident-response` | Slow incident recovery | An agent repairs the service, not just the health flag |
+| 12 | `failover` | Service endpoint failure | API-A is really taken down; answers switch to API-B only |
+| 13 | `incident-response` | Slow incident recovery | An agent repairs the service, not just the health flag |
 | **5. Operate** | | *Change policy and prove what happened* | |
-| 13 | `live-policy` | Policy testing without redeploys | One agent flips `BLOCK` → `ALLOW` → `BLOCK`, no restart |
-| 14 | `audit-trail` | Security audits and network debugging | Every row names an agent, a domain, a decision and a reason |
+| 14 | `live-policy` | Policy testing without redeploys | One agent flips `BLOCK` → `ALLOW` → `BLOCK`, no restart |
+| 15 | `audit-trail` | Security audits and network debugging | Every row names an agent, a domain, a decision and a reason |
+
+### One demo per question
+
+The acts tell the story in order. When a reviewer arrives with a single
+question, run only what answers it:
+
+| Capability | The question it answers | Command | Scenarios |
+|---|---|---|---|
+| **Security** | Can an agent reach something it should not? | `make demo-security` | 8 |
+| **Availability** | Does the lab keep serving when a dependency fails? | `make demo-availability` | 5 |
+| **Observability** | Can you prove afterwards what happened, and why? | `make demo-observability` | 5 |
+| **Resource validity** | Do cost and memory stay bounded under abuse? | `make demo-resources` | 4 |
+
+Every scenario is tagged with what it proves, and one scenario can answer more
+than one question — `incident-response` is both availability and observability.
+The same selectors work anywhere a scenario name does:
+
+```bash
+docker compose exec dashboard python scripts/demo.py run security
+docker compose exec dashboard python scripts/demo.py run observability failover
+python scripts/runloop_lab.py demo resources
+```
+
+**Resource validity** is the one that needed new machinery. A tunnelling client
+invents a fresh name for every query, so if any per-query state were keyed by
+the queried name, that alone would exhaust the resolver — no allowlist bypass
+required. `GET /runtime` reports every in-memory structure and how full it is,
+and `memory-bounds` asserts against it: state is keyed by agent and by
+configured record, never by the query. The decision-log queue is bounded and
+sheds its oldest lines under pressure rather than growing, and every shed line
+is counted, so nothing is lost silently.
 
 ### Cost governance
 
@@ -164,8 +196,8 @@ project to someone, top to bottom:
   right with their health and where that health came from (probe or override).
   Each service has a **Take down** button that fails the real container, so you
   can trigger failover by hand and watch DNS route around it.
-- **The five acts** — fourteen scenario cards, each with **Run**, plus **Run act** to
-  play a whole act and **Run full demo** for all fourteen with a progress bar. Every
+- **The five acts** — fifteen scenario cards, each with **Run**, plus **Run act** to
+  play a whole act and **Run full demo** for all fifteen with a progress bar. Every
   card keeps its own PASS/FAIL badge, and the result panel shows the individual
   checks behind the verdict.
 - **Decision log** — every DNS answer, filterable by `ALLOW` / `BLOCK` /
@@ -230,7 +262,7 @@ an ignored `.env`, and generates unique application tokens. The end-to-end
 target validates the setup, applies a Runloop **Network Policy** as the outer
 egress boundary, builds or reuses a
 **Blueprint** from this repository, starts a **Devbox** with tunnels, syncs your
-working tree, brings the lab up, runs all fourteen scenarios inside the Devbox, and
+working tree, brings the lab up, runs all fifteen scenarios inside the Devbox, and
 writes the verdicts, raw DNS decisions and attributed control actions to
 `artifacts/`. It leaves the Devbox running for the dashboard; use
 `make runloop-down` when finished.
@@ -275,6 +307,7 @@ Codex after registration, then ask: “List my Runloop Devboxes.”
 | Endpoint | Purpose |
 |---|---|
 | `GET /agents`, `GET /endpoints` | Current policy and endpoint health, with the health source |
+| `GET /dashboard` | One consolidated payload for the Reflex live view |
 | `GET /events`, `GET /summary` | Decision log and aggregate counts |
 | `GET /control-events` | Scenario and operator actions, including actor and before/after state |
 | `POST /agents/{agent}/access` | Grant or revoke a domain at runtime |
@@ -282,6 +315,7 @@ Codex after registration, then ask: “List my Runloop Devboxes.”
 | `POST /endpoints/{address}/health` | Pin health, overriding the probe |
 | `DELETE /endpoints/{address}/health` | Hand the endpoint back to the probe |
 | `GET /alerts`, `GET /spend` | Budget notifications and per-agent spend |
+| `GET /runtime` | In-memory state, queue depth, shed lines, resident memory |
 | `POST /budgets/reset` | Start a fresh budget window, so a cost demo can run twice |
 | `POST /reset` | Restore the starting policy, revive services, clear the log |
 

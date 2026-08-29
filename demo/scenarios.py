@@ -8,6 +8,8 @@ the story a reviewer sees in the browser is the story the CLI verifies.
 
 from __future__ import annotations
 
+import asyncio
+
 from dataclasses import dataclass, field
 from typing import Awaitable, Callable, List, Sequence, Tuple
 
@@ -20,6 +22,16 @@ STAGES: Tuple[Tuple[str, str, str], ...] = (
     ("operate", "Operate", "Change policy and prove what happened."),
 )
 STAGE_TITLES = {key: title for key, title, _ in STAGES}
+
+# The second axis: what a scenario proves. Acts tell the story in order;
+# capabilities let a reviewer ask one question and run only what answers it.
+CAPABILITIES: Tuple[Tuple[str, str, str], ...] = (
+    ("security", "Security", "Can an agent reach something it should not?"),
+    ("availability", "Availability", "Does the lab keep serving when a dependency fails?"),
+    ("observability", "Observability", "Can you prove afterwards what happened, and why?"),
+    ("resources", "Resource validity", "Do cost and memory stay bounded under abuse?"),
+)
+CAPABILITY_TITLES = {key: title for key, title, _ in CAPABILITIES}
 
 DOCS = "172.28.0.21"
 API_A = "172.28.0.22"
@@ -78,6 +90,7 @@ Runner = Callable[["Lab"], Awaitable[Outcome]]  # noqa: F821 - Lab lives in runn
 class Scenario:
     id: str
     stage: str
+    proves: Tuple[str, ...]
     title: str
     challenge: str
     capability: str
@@ -88,11 +101,16 @@ class Scenario:
     def stage_title(self) -> str:
         return STAGE_TITLES[self.stage]
 
+    @property
+    def proves_titles(self) -> Tuple[str, ...]:
+        return tuple(CAPABILITY_TITLES[key] for key in self.proves)
+
     def to_dict(self) -> dict:
         return {
             "id": self.id,
             "stage": self.stage,
             "stage_title": self.stage_title,
+            "proves": list(self.proves),
             "title": self.title,
             "challenge": self.challenge,
             "capability": self.capability,
@@ -394,6 +412,63 @@ async def _cost_budget(lab) -> Outcome:
     )
 
 
+async def _memory_bounds(lab) -> Outcome:
+    """Unbounded input must not become unbounded state.
+
+    A tunnelling client invents a new name for every query. If any per-query
+    state were keyed by the queried name, that alone would exhaust the
+    resolver's memory - no allowlist bypass required.
+    """
+    before = await lab.runtime()
+    payload = "7f" * 24  # 48 characters: refused by the query-shape guard
+    names = [f"{payload}-{index}.pypi.org" for index in range(40)]
+    batches = await asyncio.gather(
+        *(lab.results("researcher", name) for name in names)
+    )
+    after = await lab.runtime()
+
+    refused = sum(1 for batch in batches for result in batch if not result["ok"])
+    policy_before, policy_after = before["policy"], after["policy"]
+    store_after = after["store"]
+
+    growth = {
+        key: policy_after[key] - policy_before[key]
+        for key in ("round_robin_keys", "records", "rate_window_entries")
+    }
+
+    return (
+        f"{len(names)} never-before-seen names refused, with no new per-query state.",
+        [
+            Check(
+                "Every invented name was refused",
+                refused == len(names),
+                f"{refused}/{len(names)} refused",
+            ),
+            Check(
+                "No state is keyed by the queried name",
+                growth["round_robin_keys"] == 0 and growth["records"] == 0,
+                f"round-robin keys +{growth['round_robin_keys']}, records +{growth['records']}",
+            ),
+            Check(
+                "Refused queries do not consume the agent's quota",
+                growth["rate_window_entries"] == 0,
+                f"rate-window entries +{growth['rate_window_entries']}",
+            ),
+            Check(
+                "The decision-log queue stayed inside its bound",
+                store_after["queued"] <= store_after["queue_capacity"],
+                f"{store_after['queued']}/{store_after['queue_capacity']} queued, "
+                f"{store_after['dropped']} shed",
+            ),
+            Check(
+                "The alert buffer is capped, not growing",
+                policy_after["alerts"]["held"] <= policy_after["alerts"]["capacity"],
+                f"{policy_after['alerts']['held']}/{policy_after['alerts']['capacity']} alerts held",
+            ),
+        ],
+    )
+
+
 async def _load_balance(lab) -> Outcome:
     answers = await lab.answers("deployer", "api.internal", count=6, interval_ms=120)
     distinct = sorted(set(answers))
@@ -526,6 +601,7 @@ async def _audit_trail(lab) -> Outcome:
 SCENARIOS: Tuple[Scenario, ...] = (
     Scenario(
         id="baseline",
+        proves=('security', 'observability'),
         stage="govern",
         title="Baseline: identity-bound agents",
         challenge="Unclear agent responsibility",
@@ -535,6 +611,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="egress-governance",
+        proves=('security',),
         stage="govern",
         title="Egress governance",
         challenge="Agents accessing unauthorized services",
@@ -544,6 +621,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="isolation",
+        proves=('security',),
         stage="govern",
         title="Multi-agent isolation",
         challenge="A research agent reaching deployment systems",
@@ -553,6 +631,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="metadata-ssrf",
+        proves=('security',),
         stage="defend",
         title="Cloud metadata is unreachable",
         challenge="An over-broad allowlist becomes a credential-theft path",
@@ -562,6 +641,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="dns-exfiltration",
+        proves=('security', 'resources'),
         stage="defend",
         title="DNS tunnelling blocked",
         challenge="Data leaving through DNS queries themselves",
@@ -571,6 +651,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="lookalike-domains",
+        proves=('security',),
         stage="defend",
         title="Lookalike domains rejected",
         challenge="Typosquats and suffix confusion against an allowlist",
@@ -580,6 +661,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="supply-chain",
+        proves=('security',),
         stage="defend",
         title="Package registries, scoped per agent",
         challenge="Every agent reaching every package registry",
@@ -589,6 +671,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="rate-limit",
+        proves=('availability', 'resources'),
         stage="contain",
         title="Traffic quota under burst",
         challenge="One agent generating excessive traffic",
@@ -598,6 +681,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="cost-budget",
+        proves=('resources', 'observability'),
         stage="contain",
         title="Runaway API cost stopped",
         challenge="An agent quietly burning through a metered API budget",
@@ -606,7 +690,18 @@ SCENARIOS: Tuple[Scenario, ...] = (
         run=_cost_budget,
     ),
     Scenario(
+        id="memory-bounds",
+        stage="contain",
+        proves=("resources", "availability"),
+        title="Memory bounded under abuse",
+        challenge="Unbounded input becoming unbounded state",
+        capability="State keyed by agent and configured record, never by the query",
+        watch_for="Forty invented names, and not one byte of new per-query state.",
+        run=_memory_bounds,
+    ),
+    Scenario(
         id="load-balance",
+        proves=('availability',),
         stage="contain",
         title="Round-robin distribution",
         challenge="Uneven traffic distribution",
@@ -616,6 +711,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="failover",
+        proves=('availability',),
         stage="survive",
         title="Endpoint failure and failover",
         challenge="Service endpoint failure",
@@ -625,6 +721,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="incident-response",
+        proves=('availability', 'observability'),
         stage="survive",
         title="Automated incident response",
         challenge="Slow incident recovery",
@@ -634,6 +731,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="live-policy",
+        proves=('security', 'observability'),
         stage="operate",
         title="Live policy update",
         challenge="Policy testing without redeploys",
@@ -643,6 +741,7 @@ SCENARIOS: Tuple[Scenario, ...] = (
     ),
     Scenario(
         id="audit-trail",
+        proves=('observability',),
         stage="operate",
         title="Audit trail",
         challenge="Security audits and agent-network debugging",
@@ -663,6 +762,14 @@ def scenarios_by_stage() -> List[Tuple[str, str, str, List[Scenario]]]:
     ]
 
 
+def scenarios_by_capability() -> List[Tuple[str, str, str, List[Scenario]]]:
+    """The catalogue grouped by what each scenario proves."""
+    return [
+        (key, title, question, [s for s in SCENARIOS if key in s.proves])
+        for key, title, question in CAPABILITIES
+    ]
+
+
 def get_scenario(scenario_id: str) -> Scenario:
     try:
         return SCENARIOS_BY_ID[scenario_id]
@@ -678,12 +785,15 @@ def resolve_selection(names: Sequence[str]) -> List[Scenario]:
     so `run survive failover` is the act, not the act plus a repeat.
     """
     stage_keys = {key for key, _, _ in STAGES}
+    capability_keys = {key for key, _, _ in CAPABILITIES}
     selected: set = set()
     for name in names:
         if name == "all":
             return list(SCENARIOS)
         if name in stage_keys:
             selected.update(s.id for s in SCENARIOS if s.stage == name)
+        elif name in capability_keys:
+            selected.update(s.id for s in SCENARIOS if name in s.proves)
         else:
             selected.add(get_scenario(name).id)
     return [scenario for scenario in SCENARIOS if scenario.id in selected]

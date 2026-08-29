@@ -1,6 +1,6 @@
 # The lab's end-to-end flow. `make` on its own shows this list.
 .DEFAULT_GOAL := help
-.PHONY: help test demo-image check up demo demo-json smoke demo-ready scenarios logs down clean runloop-setup runloop-preflight runloop-mcp-setup runloop-mcp-check runloop-policy runloop-blueprint runloop-up runloop-redeploy runloop-demo runloop-status runloop-snapshot runloop-down runloop-e2e
+.PHONY: help test up-fast demo-image demo-security demo-availability demo-observability demo-resources check up demo demo-json smoke demo-ready scenarios logs down clean runloop-setup runloop-preflight runloop-mcp-setup runloop-mcp-check runloop-policy runloop-blueprint runloop-up runloop-redeploy runloop-demo runloop-status runloop-snapshot runloop-down runloop-e2e
 PYTHON_ENV := PYTHONPYCACHEPREFIX=/tmp/agentdns-sentinel-pycache
 RUNLOOP_PYTHON := .venv/bin/python
 CODEX_CLI := $(shell if command -v codex >/dev/null 2>&1; then command -v codex; elif test -x /Applications/ChatGPT.app/Contents/Resources/codex; then printf '%s' /Applications/ChatGPT.app/Contents/Resources/codex; fi)
@@ -10,6 +10,18 @@ help: ## Show this help
 		| awk 'BEGIN {FS = ":.*?## "}; {printf "  \033[1m%-20s\033[0m %s\n", $$1, $$2}'
 
 ## -- local flow ------------------------------------------------------------
+
+demo-security: ## Prove the security controls (8 scenarios)
+	docker compose exec -T dashboard python scripts/demo.py run security
+
+demo-availability: ## Prove failover and load handling (4 scenarios)
+	docker compose exec -T dashboard python scripts/demo.py run availability
+
+demo-observability: ## Prove the evidence trail (5 scenarios)
+	docker compose exec -T dashboard python scripts/demo.py run observability
+
+demo-resources: ## Prove cost and memory stay bounded (4 scenarios)
+	docker compose exec -T dashboard python scripts/demo.py run resources
 
 demo-image: ## Regenerate every PNG in docs/ from its source
 	python3 scripts/render_demo_image.py
@@ -27,9 +39,13 @@ check: test ## Run static checks and validate the Compose model
 scenarios: ## List the demonstration scenarios
 	python3 scripts/demo.py list
 
-up: ## Build and start the lab locally
+up: ## Build and start the lab, waiting until it is ready to demonstrate
 	docker compose up --build -d
-	@echo "Dashboard: http://localhost:3000   Control API (bearer protected): http://localhost:8053"
+	@bash scripts/wait_for_lab.sh
+
+up-fast: ## Start the lab without waiting for the dashboard frontend
+	docker compose up --build -d
+	@bash scripts/wait_for_lab.sh --api-only
 
 demo: ## Run every scenario inside the running lab
 	docker compose exec -T dashboard python scripts/demo.py run all
