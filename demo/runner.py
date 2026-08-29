@@ -140,11 +140,24 @@ class Lab:
     async def summary(self) -> dict:
         return await self._get("/summary")
 
+    async def dashboard_snapshot(
+        self, events_limit: int = 60, control_limit: int = 30, alerts_limit: int = 20
+    ) -> dict:
+        return await self._get(
+            "/dashboard",
+            events_limit=events_limit,
+            control_limit=control_limit,
+            alerts_limit=alerts_limit,
+        )
+
     async def events(self, limit: int = 50) -> List[dict]:
         return await self._get("/events", limit=limit)
 
     async def reset_budgets(self) -> dict:
         return await self._post("/budgets/reset")
+
+    async def runtime(self) -> dict:
+        return await self._get("/runtime")
 
     async def alerts(self, limit: int = 50) -> List[dict]:
         return await self._get("/alerts", limit=limit)

@@ -87,8 +87,7 @@ def summary(_: ActorContext = Depends(require_control)):
     return store.summary()
 
 
-@app.get("/agents")
-def agents(_: ActorContext = Depends(require_control)):
+def _agent_snapshot() -> list[dict]:
     activity = store.agent_activity()
     result = []
     for agent in engine.agents():
@@ -104,6 +103,33 @@ def agents(_: ActorContext = Depends(require_control)):
             }
         )
     return result
+
+
+@app.get("/agents")
+def agents(_: ActorContext = Depends(require_control)):
+    return _agent_snapshot()
+
+
+def _process_stats() -> dict:
+    """Resident memory, where the platform reports it."""
+    try:
+        with open("/proc/self/status") as handle:
+            for line in handle:
+                if line.startswith("VmRSS:"):
+                    return {"rss_kb": int(line.split()[1])}
+    except OSError:
+        pass
+    return {"rss_kb": None}
+
+
+@app.get("/runtime")
+def runtime(_: ActorContext = Depends(require_control)):
+    """What the resolver is holding in memory, and how full its buffers are."""
+    return {
+        "policy": engine.runtime_stats(),
+        "store": store.stats(),
+        "process": _process_stats(),
+    }
 
 
 @app.get("/alerts")
@@ -140,6 +166,25 @@ def reset_budgets(context: ActorContext = Depends(require_control)):
 @app.get("/endpoints")
 def endpoints(_: ActorContext = Depends(require_control)):
     return engine.endpoints()
+
+
+@app.get("/dashboard")
+def dashboard_snapshot(
+    events_limit: int = Query(default=60, ge=1, le=500),
+    control_limit: int = Query(default=30, ge=1, le=500),
+    alerts_limit: int = Query(default=20, ge=1, le=200),
+    _: ActorContext = Depends(require_control),
+):
+    """One consistent, low-overhead payload for a dashboard refresh."""
+    return {
+        "events": store.events(events_limit),
+        "summary": store.summary(),
+        "agents": _agent_snapshot(),
+        "endpoints": engine.endpoints(),
+        "control_events": store.control_events(control_limit),
+        "alerts": engine.alerts.recent(alerts_limit),
+        "spend": engine.spend_report(),
+    }
 
 
 @app.post("/endpoints/{address}/health")

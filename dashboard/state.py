@@ -67,30 +67,12 @@ class DashboardState(rx.State):
         """Every call goes through the authenticated lab client."""
         return Lab(client, CONTROL_API, AGENT_URLS, actor=ACTOR)
 
-    async def _fetch(self) -> dict | None:
+    async def _fetch(self, client: httpx.AsyncClient | None = None) -> dict | None:
         try:
-            async with httpx.AsyncClient(timeout=8) as client:
-                lab = self._lab(client)
-                (
-                    events, summary, agents, endpoints, control_events, alerts, spend
-                ) = await asyncio.gather(
-                    lab.events(60),
-                    lab.summary(),
-                    lab.agents(),
-                    lab.endpoints(),
-                    lab.control_events(30),
-                    lab.alerts(20),
-                    lab.spend(),
-                )
-            return {
-                "events": events,
-                "summary": summary,
-                "agents": agents,
-                "endpoints": endpoints,
-                "control_events": control_events,
-                "alerts": alerts,
-                "spend": spend,
-            }
+            if client is not None:
+                return await self._lab(client).dashboard_snapshot()
+            async with httpx.AsyncClient(timeout=8) as owned_client:
+                return await self._lab(owned_client).dashboard_snapshot()
         except Exception:
             return None
 
@@ -201,11 +183,14 @@ class DashboardState(rx.State):
         passed = 0
         async with httpx.AsyncClient() as client:
             lab = self._lab(client)
+            # A dashboard run must be repeatable even when the previous CLI or UI
+            # demonstration left rolling quotas and budgets populated.
+            await lab.reset()
             for scenario in scenarios:
                 async with self:
                     self.running_id = scenario.id
                 result = await execute_scenario(scenario, lab)
-                data = await self._fetch()
+                data = await self._fetch(client)
                 async with self:
                     self._apply_result(result)
                     self.progress_done += 1

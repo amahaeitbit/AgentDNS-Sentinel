@@ -92,8 +92,8 @@ def header():
                 ),
                 rx.heading("AgentDNS Sentinel", size="7", color=theme.INK),
                 rx.text(
-                    "Identity-aware DNS policy, per-agent quotas, health-based failover "
-                    "and an auditable decision log — for agents sharing one sandbox.",
+                    "Reflex operator console for identity-aware DNS policy, per-agent "
+                    "budgets, health-based failover, and auditable agent traffic.",
                     size="2",
                     color=theme.INK_MUTED,
                     max_width="60ch",
@@ -158,6 +158,105 @@ def header():
         border_bottom=rx.color_mode_cond(
             light="1px solid #e1e0d9", dark="1px solid #2c2c2a"
         ),
+    )
+
+
+# -------------------------------------------------------- operator workflow
+
+
+def _workflow_step(icon: str, label: str, title: str, description: str):
+    return rx.box(
+        rx.vstack(
+            rx.hstack(
+                rx.center(
+                    rx.icon(icon, size=16, color=theme.INK),
+                    width="34px",
+                    height="34px",
+                    border_radius="10px",
+                    background=theme.SUNK,
+                ),
+                rx.vstack(
+                    rx.text(
+                        label,
+                        size="1",
+                        weight="bold",
+                        color=theme.INK_MUTED,
+                        letter_spacing="0.08em",
+                    ),
+                    rx.heading(title, size="3", color=theme.INK),
+                    spacing="0",
+                    align="start",
+                ),
+                spacing="3",
+                align="center",
+            ),
+            rx.text(description, size="2", color=theme.INK_SOFT),
+            spacing="3",
+            align="start",
+        ),
+        padding="0.85rem 0.95rem",
+        border_radius="12px",
+        background=theme.SUNK,
+        width="100%",
+        height="100%",
+    )
+
+
+def operator_workflow():
+    """Explain the value Reflex adds without implying that it enforces traffic."""
+    return theme.surface_card(
+        rx.vstack(
+            theme.section_heading(
+                "What Reflex does",
+                "One operator surface to observe, control, and prove agent-network behavior.",
+                rx.badge("OPERATOR PLANE", color_scheme="blue", variant="soft"),
+            ),
+            rx.grid(
+                _workflow_step(
+                    "scan-eye",
+                    "OBSERVE",
+                    "See every decision",
+                    "Follow agent identity, destination, outcome, quota, budget, and service health live.",
+                ),
+                _workflow_step(
+                    "sliders-horizontal",
+                    "CONTROL",
+                    "Exercise the system",
+                    "Run scenarios, inject a real endpoint failure, recover services, and reset the lab.",
+                ),
+                _workflow_step(
+                    "file-check-2",
+                    "PROVE",
+                    "Keep the evidence",
+                    "Review DNS decisions and attributed control changes, then export evidence through Runloop.",
+                ),
+                columns={"initial": "1", "md": "3"},
+                spacing="3",
+                width="100%",
+            ),
+            rx.flex(
+                theme.status_pill(
+                    "Reflex: visibility + controls",
+                    rx.icon("layout-dashboard", size=13, color=theme.INK_SOFT),
+                ),
+                rx.icon("arrow-right", size=14, color=theme.INK_MUTED),
+                theme.status_pill(
+                    "AgentDNS: policy decisions",
+                    rx.icon("waypoints", size=13, color=theme.INK_SOFT),
+                ),
+                rx.icon("arrow-right", size=14, color=theme.INK_MUTED),
+                theme.status_pill(
+                    "Runloop: isolation + boundary",
+                    rx.icon("shield-check", size=13, color=theme.INK_SOFT),
+                ),
+                spacing="2",
+                wrap="wrap",
+                align="center",
+            ),
+            width="100%",
+            spacing="4",
+            align="start",
+        )
     )
 
 
@@ -431,10 +530,10 @@ def _rail(label: str):
 def _resolver_card():
     steps = [
         ("fingerprint", "Identity", "source IP → agent"),
+        ("shield-ban", "Deny + guard", "block threats first"),
         ("shield", "Allowlist", "may it resolve this?"),
-        ("gauge", "Quota", "per-agent q/s"),
-        ("heart-pulse", "Health", "drop failed endpoints"),
-        ("shuffle", "Balance", "round-robin the rest"),
+        ("gauge", "Quota + budget", "limit rate and cost"),
+        ("heart-pulse", "Health + balance", "route to healthy replicas"),
     ]
     return rx.box(
         rx.vstack(

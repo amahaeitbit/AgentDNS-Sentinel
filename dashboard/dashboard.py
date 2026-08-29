@@ -32,6 +32,7 @@ def index():
     return rx.box(
         rx.vstack(
             views.header(),
+            views.operator_workflow(),
             views.stat_row(),
             views.traffic_bar(),
             views.topology(),
