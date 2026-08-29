@@ -35,6 +35,9 @@ class FakeLab:
     def advance(self, seconds: float = 1.0) -> None:
         self.now += seconds
 
+    async def settle_rate_window(self) -> None:
+        self.advance(1.05)
+
     def _settle(self) -> None:
         """Run enough probe cycles for any threshold to be crossed."""
         for _ in range(max(self.monitor.tracker.failure_threshold,

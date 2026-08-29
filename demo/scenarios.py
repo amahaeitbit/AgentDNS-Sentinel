@@ -11,7 +11,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Awaitable, Callable, List, Sequence, Tuple
 
-# The demonstration is told in four acts; every scenario belongs to one.
+# Every scenario belongs to one act in this narrative sequence.
 STAGES: Tuple[Tuple[str, str, str], ...] = (
     ("govern", "Govern", "Decide who may talk to what."),
     ("defend", "Defend", "Close the egress paths attackers actually use."),
@@ -656,7 +656,7 @@ SCENARIOS_BY_ID = {scenario.id: scenario for scenario in SCENARIOS}
 
 
 def scenarios_by_stage() -> List[Tuple[str, str, str, List[Scenario]]]:
-    """The catalogue grouped into the four acts, in narrative order."""
+    """The catalogue grouped into its acts, in narrative order."""
     return [
         (key, title, subtitle, [s for s in SCENARIOS if s.stage == key])
         for key, title, subtitle in STAGES

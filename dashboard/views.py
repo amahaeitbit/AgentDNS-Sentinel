@@ -678,8 +678,8 @@ def act_section(act_index: int, key: str, title: str, subtitle: str, scenarios):
 def scenarios_section():
     return rx.vstack(
         theme.section_heading(
-            "The demonstration, in four acts",
-            "Nine scenarios. Each one answers an operational challenge and reports pass or fail.",
+            f"The demonstration, in {len(STAGE_SECTIONS)} acts",
+            f"{len(SCENARIOS)} scenarios. Each one answers an operational challenge and reports pass or fail.",
         ),
         *[
             act_section(index, key, title, subtitle, scenarios)

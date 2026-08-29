@@ -13,6 +13,7 @@ from .scenarios import SCENARIOS, Check, Scenario, ScenarioResult, get_scenario
 
 DEFAULT_CONTROL_API = os.getenv("CONTROL_API", "http://dns-manager:8053")
 DEFAULT_CONTROL_TOKEN = os.getenv("CONTROL_TOKEN", "demo-control-token")
+RATE_WINDOW_SETTLE_SECONDS = 1.05
 DEFAULT_AGENT_URLS: Dict[str, str] = {
     "researcher": os.getenv("RESEARCHER_URL", "http://researcher:9000"),
     "deployer": os.getenv("DEPLOYER_URL", "http://deployer:9000"),
@@ -67,6 +68,10 @@ class Lab:
         if self.scenario_id:
             headers["X-Scenario-ID"] = self.scenario_id
         return headers
+
+    async def settle_rate_window(self) -> None:
+        """Let traffic from the preceding scenario age out of the QPS window."""
+        await asyncio.sleep(RATE_WINDOW_SETTLE_SECONDS)
 
     # -- agent traffic ----------------------------------------------------
     async def results(
@@ -248,6 +253,8 @@ async def run_scenario(scenario: Scenario | str, lab: Lab) -> ScenarioResult:
     if hasattr(lab, "scenario_id"):
         lab.scenario_id = scenario.id
     try:
+        if hasattr(lab, "settle_rate_window"):
+            await lab.settle_rate_window()
         if hasattr(lab, "activity"):
             await lab.activity("SCENARIO_STARTED", f"scenario:{scenario.id}")
         headline, checks = await scenario.run(lab)

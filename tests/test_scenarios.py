@@ -60,7 +60,6 @@ class ScenarioBehaviourTest(unittest.TestCase):
             lab = FakeLab()
             results = []
             for scenario in SCENARIOS:
-                lab.advance(2.0)  # let per-second quotas refill between scenarios
                 results.append(await run_scenario(scenario, lab))
             return results
 

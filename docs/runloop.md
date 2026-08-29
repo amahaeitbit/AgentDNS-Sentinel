@@ -110,11 +110,13 @@ up                docker compose up -d                                     (ever
 ```
 
 `up` therefore does **not** pass `--build`. After changing a Dockerfile or a
-dependency, either rebuild the blueprint, or pass `--rebuild-images` to rebuild
-inside the running Devbox:
+dependency, either rebuild the blueprint, or redeploy inside the running
+Devbox. A redeploy synchronizes the working tree and always rebuilds the
+service images so the containers cannot accidentally keep the Blueprint's old
+application revision:
 
 ```bash
-python scripts/runloop_lab.py up --rebuild-images
+make runloop-redeploy
 ```
 
 ## Blueprint versus code sync
@@ -127,7 +129,8 @@ repository at `/workspace/agentdns-sentinel`. It is built from a real build cont
 `up` then syncs your current working tree over the top before starting Compose.
 That means:
 
-- **Changed a scenario or a policy?** Just `up` again. No blueprint rebuild.
+- **Changed application code, a scenario, or policy?** Run
+  `make runloop-redeploy`. No Blueprint rebuild is needed.
 - **Changed the base image or system packages?** Rebuild with `blueprint`.
 
 Both paths exclude `.git`, `.env`, `.venv`, `.web`, `__pycache__`, `artifacts/`

@@ -153,7 +153,10 @@ async def cmd_redeploy(lab: RunloopLab, state: LabState, args) -> int:
     devbox = await resolve_devbox(lab, state, args.devbox_id)
     urls = state.tunnels or await lab.tunnel_urls(devbox)
     await lab.sync_code(devbox, REPO_ROOT)
-    await lab.start_lab(devbox, urls["dashboard"], rebuild=getattr(args, "rebuild_images", False))
+    # A redeploy exists specifically to replace the application baked into the
+    # Blueprint's warm Docker images. Reusing those images after syncing source
+    # leaves the running containers on the old revision.
+    await lab.start_lab(devbox, urls["dashboard"], rebuild=True)
     state.tunnels = urls
     state.save()
     print_tunnels(urls)

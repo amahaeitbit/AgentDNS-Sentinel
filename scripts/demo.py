@@ -37,7 +37,7 @@ def paint(text: str, color: str, enabled: bool) -> str:
 
 
 def print_catalogue(color: bool) -> None:
-    print(paint("The demonstration, in four acts", BOLD, color))
+    print(paint(f"The demonstration, in {len(STAGES)} acts", BOLD, color))
     for index, (_, title, subtitle, scenarios) in enumerate(scenarios_by_stage(), start=1):
         print(f"\n{paint(f'{index}. {title}', BOLD, color)} — {paint(subtitle, DIM, color)}")
         for scenario in scenarios:
