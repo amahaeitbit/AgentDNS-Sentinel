@@ -23,11 +23,58 @@ mapping of AgentDNS, Runloop, and Reflex, see
 make demo-ready  # validate, build, start, and verify all fifteen scenarios
 ```
 
+## Dashboard
+
+![AgentDNS Sentinel Reflex dashboard running in a Runloop Devbox](docs/agentdns-sentinel-dashboard.jpg)
+
+The Reflex operator console shows live agent identity, DNS decisions, quotas,
+budgets, endpoint health, scenario verdicts, and the attributed audit trail in
+one view. The screenshot above is from the Runloop deployment after all fifteen
+scenarios passed.
+
+## System flows
+
+### DNS enforcement path
+
+```mermaid
+flowchart LR
+    A["AI agent workload"] -->|"DNS query + workload identity"| D["AgentDNS Sentinel"]
+    D --> I["Resolve agent identity"]
+    I --> G["Deny rules + query guard"]
+    G --> P["Per-agent allowlist"]
+    P --> Q["Quota + cost budget"]
+    Q --> H["Health check + load balance"]
+    H -->|"Allowed answer"| S["Healthy service endpoint"]
+    G -->|"Blocked"| E["Decision and audit evidence"]
+    P -->|"Blocked"| E
+    Q -->|"Throttled"| E
+    H --> E
+    R["Runloop deny-by-default network policy<br/>Outer egress boundary"] -.-> A
+```
+
+### Operator demonstration loop
+
+```mermaid
+flowchart LR
+    O["Operator"] --> R["Reflex dashboard"]
+    R -->|"Run scenario or inject failure"| C["AgentDNS control API"]
+    C --> D["DNS manager"]
+    D --> A["Five role-specific agents"]
+    A --> S["Sandboxed services"]
+    D -->|"Decisions, health, budgets"| R
+    C -->|"Attributed control events"| R
+    D --> V["Runloop evidence artifacts"]
+    R -->|"PASS / FAIL with checks"| O
+```
+
 ![AgentDNS Sentinel at a glance](docs/agentdns-sentinel-demo.png)
 
 Every decision on that board is produced by running the real policy engine
-against `config/policies.json`, so the picture cannot drift from the code.
-Regenerate it (light and dark) with `make demo-image`.
+against `config/policies.json`, so the picture cannot drift from the code. The
+**end-to-end demo flow** band shows both ways of running it — locally with
+`make`, or on Runloop — and the acts below it are read from the catalogue, so
+the counts stay honest. Regenerate everything (light, dark, and the
+architecture diagram) with `make demo-image`.
 
 ## The demonstration, in five acts
 
