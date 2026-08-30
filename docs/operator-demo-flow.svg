@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1440" height="410" viewBox="0 0 1440 410" role="img" aria-labelledby="title desc">
+  <title id="title">AgentDNS Sentinel operator demonstration loop</title>
+  <desc id="desc">An operator uses the Reflex dashboard to run scenarios and inject failures through the control API. AgentDNS governs five agents and sandbox services, then sends decisions, health, budgets, verdicts, and Runloop evidence back to the operator.</desc>
+  <defs>
+    <marker id="arrow2" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#2563eb"/></marker>
+    <marker id="return-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#059669"/></marker>
+    <filter id="shadow2" x="-10%" y="-20%" width="120%" height="150%"><feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.12"/></filter>
+    <style>
+      .title{font:700 28px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#0f172a}.sub{font:400 15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#64748b}.label{font:700 16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#0f172a;text-anchor:middle}.small{font:500 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#64748b;text-anchor:middle}.box{fill:#fff;stroke:#cbd5e1;stroke-width:2;rx:14;filter:url(#shadow2)}.reflex{fill:#eff6ff;stroke:#60a5fa}.runloop{fill:#eef2ff;stroke:#818cf8}.agent{fill:#f0fdfa;stroke:#2dd4bf}.evidence{fill:#ecfdf5;stroke:#34d399}.arrow{fill:none;stroke:#2563eb;stroke-width:3;marker-end:url(#arrow2)}.return{fill:none;stroke:#059669;stroke-width:3;marker-end:url(#return-arrow)}
+    </style>
+  </defs>
+  <rect width="1440" height="410" fill="#f8fafc"/>
+  <text x="42" y="52" class="title">Operator demonstration loop</text>
+  <text x="42" y="78" class="sub">Reflex operates the demo, AgentDNS makes the decisions, and Runloop contains the environment</text>
+
+  <path class="arrow" d="M212 165 H260"/><path class="arrow" d="M460 165 H508"/><path class="arrow" d="M708 165 H756"/><path class="arrow" d="M956 165 H1004"/><path class="arrow" d="M1204 165 H1252"/>
+  <path class="return" d="M856 209 V294 H460"/><path class="return" d="M360 253 V209"/><path class="return" d="M1104 209 V337 H212 V209"/>
+
+  <g><rect class="box" x="12" y="121" width="200" height="88"/><text class="label" x="112" y="158">Operator</text><text class="small" x="112" y="182">observe · control · prove</text></g>
+  <g><rect class="box reflex" x="260" y="121" width="200" height="88"/><text class="label" x="360" y="158">Reflex dashboard</text><text class="small" x="360" y="182">run + visualize</text></g>
+  <g><rect class="box reflex" x="508" y="121" width="200" height="88"/><text class="label" x="608" y="158">Control API</text><text class="small" x="608" y="182">scenario + fault actions</text></g>
+  <g><rect class="box runloop" x="756" y="121" width="200" height="88"/><text class="label" x="856" y="158">DNS manager</text><text class="small" x="856" y="182">identity-aware policy</text></g>
+  <g><rect class="box agent" x="1004" y="121" width="200" height="88"/><text class="label" x="1104" y="158">Five agents</text><text class="small" x="1104" y="182">role-scoped traffic</text></g>
+  <g><rect class="box agent" x="1252" y="121" width="176" height="88"/><text class="label" x="1340" y="158">Services</text><text class="small" x="1340" y="182">healthy replicas</text></g>
+
+  <g><rect class="box evidence" x="260" y="253" width="200" height="88"/><text class="label" x="360" y="290">Live evidence</text><text class="small" x="360" y="314">decisions · health · cost</text></g>
+  <text class="small" x="650" y="286">state snapshot</text>
+  <text class="small" x="654" y="359">Runloop artifacts + PASS / FAIL checks return to the operator</text>
+</svg>

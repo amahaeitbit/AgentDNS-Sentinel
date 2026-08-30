@@ -36,36 +36,11 @@ scenarios passed.
 
 ### DNS enforcement path
 
-```mermaid
-flowchart LR
-    A["AI agent workload"] -->|"DNS query + workload identity"| D["AgentDNS Sentinel"]
-    D --> I["Resolve agent identity"]
-    I --> G["Deny rules + query guard"]
-    G --> P["Per-agent allowlist"]
-    P --> Q["Quota + cost budget"]
-    Q --> H["Health check + load balance"]
-    H -->|"Allowed answer"| S["Healthy service endpoint"]
-    G -->|"Blocked"| E["Decision and audit evidence"]
-    P -->|"Blocked"| E
-    Q -->|"Throttled"| E
-    H --> E
-    R["Runloop deny-by-default network policy<br/>Outer egress boundary"] -.-> A
-```
+![DNS enforcement path from agent identity to a healthy service](docs/dns-enforcement-flow.svg)
 
 ### Operator demonstration loop
 
-```mermaid
-flowchart LR
-    O["Operator"] --> R["Reflex dashboard"]
-    R -->|"Run scenario or inject failure"| C["AgentDNS control API"]
-    C --> D["DNS manager"]
-    D --> A["Five role-specific agents"]
-    A --> S["Sandboxed services"]
-    D -->|"Decisions, health, budgets"| R
-    C -->|"Attributed control events"| R
-    D --> V["Runloop evidence artifacts"]
-    R -->|"PASS / FAIL with checks"| O
-```
+![Operator demonstration loop across Reflex, AgentDNS, and Runloop](docs/operator-demo-flow.svg)
 
 ![AgentDNS Sentinel at a glance](docs/agentdns-sentinel-demo.png)
 
